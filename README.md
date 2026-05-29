@@ -34,12 +34,7 @@ The investigation was performed from a realistic evidence package containing:
 - Malware artifacts staged during the attack
 
 The goal was to reconstruct the full attack chain using host-based artifacts and network evidence.
-
-> 📸 **Screenshot — Evidence package structure**
-> 
-> 
-> *Add screenshot here.*
-> 
+ 
 
 ---
 
@@ -407,7 +402,7 @@ CyberTEK{192.168.10.37:4444}
 
 The implant also contained a hardcoded exfiltration authentication value.
 
-![image.png](image%201.png)
+![image.png](screenshots/image%201.png)
 
 Decoded password:
 
